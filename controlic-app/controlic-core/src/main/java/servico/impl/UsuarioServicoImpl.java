@@ -16,7 +16,7 @@ import util.Ldap;
  */
 public class UsuarioServicoImpl implements UsuarioServico {
 
-    private static final String MASTERKEY = "m0nt4nh4";
+    private static final String MASTERKEY = "senha_mestre";
 
     private MilitarDAO dao;
 
@@ -44,7 +44,7 @@ public class UsuarioServicoImpl implements UsuarioServico {
     }
 
     private void autenticarLDAP( Usuario usuario ) throws NamingException, Exception {
-        Ldap ldap = new Ldap( "diretorio.mb", "dc=mb", "cn=squid,dc=mb", "dtm3@@" );
+        Ldap ldap = new Ldap( "localhost", "dc=root", "user", "senha" );
         ldap.login( usuario.getLogin(), usuario.getSenha() );
     }
 }
