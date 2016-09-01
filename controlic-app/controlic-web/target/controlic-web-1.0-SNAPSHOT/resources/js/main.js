@@ -262,11 +262,11 @@ function populate_table(url){
             for(indice in dados){
                 var licenca = dados[indice];
                 var row = $('<tr></tr>');
-                var dataLicenca = $('<td></td>').addClass("coluna-data").text(format_date(licenca.dataLicenca));
-                var militar = $('<td></td>').addClass("coluna-data").text(licenca.militar.loginNome);
-                var tipo = $('<td></td>').addClass("coluna-data").text(licenca.tipo.descricao);
+                var dataLicenca = $('<td></td>').addClass("coluna-data").text(licenca.dataLicenca);
+                var militar = $('<td></td>').addClass("coluna-data").text(licenca.militar);
+                var tipo = $('<td></td>').addClass("coluna-data").text(licenca.tipo);
                 var motivo = $('<td></td>').text(licenca.motivo);
-                var publicada = $('<td></td>').addClass("coluna-data").text(licenca.publicadaPD ? 'Sim' : 'N\xE3o');
+                var publicada = $('<td></td>').addClass("coluna-data").text(licenca.pd);
                 row.append(dataLicenca);
                 row.append(militar);
                 row.append(tipo);
@@ -321,12 +321,12 @@ function create_list_calendar(url){
     var datas = new Array();
     for(x in json) {
         var licenca = json[x];
-        datas[format_date(licenca.dataLicenca)] = new Array();
+        datas[licenca.dataLicenca] = new Array();
         var i = 0;
         for(y in json) {
             var lic = json[y];
             if(lic.dataLicenca == licenca.dataLicenca){
-                datas[format_date(licenca.dataLicenca)][i] = lic.militar;
+                datas[licenca.dataLicenca][i] = lic.militar;
                 i++;
             }
         }
@@ -372,15 +372,15 @@ function populateFields(datas, theYear, theMonth) {
             // enter date values
             var day = i - firstDay + 1;
             document.getElementsByClassName('day-calendar')[i].innerHTML = day;
-            var str = day;
-                str += "/" 
+            var str = day < 10 ? '0' + day : day;
+                str += "/"; 
                 str += (theMonth + 1) < 10 ? '0' + (theMonth + 1) : (theMonth + 1);
                 str += "/" + theYear;
             var data = datas[str];
-            if( data != null ){
+            if( data !== null ){
                 var militares = '';
                 for(x in data){
-                    militares += data[x].loginNome + '<br/>';
+                    militares += data[x] + '<br/>';
                 }
                 document.getElementsByClassName('day-calendar')[i].innerHTML = day +
                     '<br/>' + militares;

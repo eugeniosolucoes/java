@@ -6,6 +6,7 @@ package controlador;
 
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import modelo.dto.LicencaDTO;
 import modelo.jpa.Licenca;
 import modelo.jpa.Militar;
 import org.json.JSONArray;
@@ -27,6 +29,7 @@ import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 import servico.LicencaServico;
 import servico.impl.LicencaServicoImpl;
 import util.MyStrings;
@@ -95,9 +98,18 @@ public class LicencaController {
 
     @RequestMapping( "/licenca/listar" )
     public String listar( Model model ) {
+        SimpleDateFormat ordenacao = new SimpleDateFormat( "yyyy-MM-dd" );
+        SimpleDateFormat exibicao = new SimpleDateFormat( "dd/MM/yyyy" );
         try {
             List<Licenca> lista = servico.listarPorMilitar( (Militar) request.getSession().getAttribute( "usuario" ) );
-            model.addAttribute( "lista", lista );
+            List<LicencaDTO> listaDTO = new ArrayList<LicencaDTO>();
+            for ( Licenca licenca : lista ) {
+                listaDTO.add( new LicencaDTO( licenca.getId().toString(),
+                        ordenacao.format( licenca.getDataLicenca() ), 
+                        exibicao.format( licenca.getDataLicenca() ), 
+                        licenca.getMotivo() ) );
+            }
+            model.addAttribute( "lista", listaDTO );
         } catch ( Exception ex ) {
             model.addAttribute( "tipoMensagem", Mensagem.TYPE_ERROR );
             model.addAttribute( "mensagem",
@@ -133,10 +145,13 @@ public class LicencaController {
     @RequestMapping( "/licenca/visualizar/{ano}/{mes}" )
     public String visualizar( @PathVariable Integer ano,
             @PathVariable Integer mes, Model model ) {
+        SimpleDateFormat sdf1 = new SimpleDateFormat( "dd/MM/yyyy" );
+        SimpleDateFormat sdf2 = new SimpleDateFormat( "yyyy-MM-dd" );
         try {
             List<Licenca> licencas = servico.listarPorAnoMes( ano, mes );
+            List<LicencaDTO> listaDTO = retornarDTO( licencas );            
             model.addAttribute( "url", String.format( "%s/licenca/visualizar/json/%d/%d", request.getContextPath(), ano, mes ) );
-            model.addAttribute( "licencas", licencas );
+            model.addAttribute( "licencas", listaDTO );
             model.addAttribute( "anos", servico.listarAnos() );
             model.addAttribute( "meses", MESES );
             model.addAttribute( "ano", ano );
@@ -156,8 +171,9 @@ public class LicencaController {
             Integer ano = calendar.get( Calendar.YEAR );
             Integer mes = calendar.get( Calendar.MONTH ) + 1;
             List<Licenca> licencas = servico.listarPorAnoMes( ano, mes );
+            List<LicencaDTO> listaDTO = retornarDTO( licencas );            
             model.addAttribute( "url", String.format( "%s/licenca/visualizar/json/%d/%d", request.getContextPath(), ano, mes ) );
-            model.addAttribute( "licencas", licencas );
+            model.addAttribute( "licencas", listaDTO );
             model.addAttribute( "anos", servico.listarAnos() );
             model.addAttribute( "meses", MESES );
             model.addAttribute( "ano", ano );
@@ -170,41 +186,51 @@ public class LicencaController {
         return entidade + "/visualizar";
     }
 
-    @RequestMapping( "/licenca/visualizar/json" )
-    public void visualizarJSON( HttpServletResponse response ) throws Exception {
-        response.setContentType( "application/json" );
-        PrintWriter out = response.getWriter();
+    public List<LicencaDTO> retornarDTO( List<Licenca> licencas ) {
+        SimpleDateFormat sdf1 = new SimpleDateFormat( "yyyy-MM-dd" );
+        SimpleDateFormat sdf2 = new SimpleDateFormat( "dd/MM/yyyy" );
+        List<LicencaDTO> listaDTO = new ArrayList<LicencaDTO>();
+        for ( Licenca licenca : licencas ) {
+            listaDTO.add( new LicencaDTO(
+                    licenca.getId().toString(),
+                    sdf1.format( licenca.getDataLicenca() ),
+                    sdf2.format( licenca.getDataLicenca() ),
+                    sdf2.format( licenca.getDataLicenca() ),
+                    licenca.getMotivo(),
+                    licenca.getMilitar().getLoginNome(),
+                    licenca.getTipo().getDescricao(),
+                    licenca.isPublicadaPD() ? "Sim": "Não" ) );
+        }
+        return listaDTO;
+    }
+    @RequestMapping( value="/licenca/visualizar/json", method = RequestMethod.GET, produces = "application/json" )
+    public @ResponseBody List<LicencaDTO> visualizarJSON() throws Exception {
         Calendar calendar = Calendar.getInstance();
         Integer ano = calendar.get( Calendar.YEAR );
         Integer mes = calendar.get( Calendar.MONTH ) + 1;
-        JSONArray licencasJSON = servico.listarPorAnoMesJSON( ano, mes );
-        out.print( licencasJSON );
-        out.flush();
+        List<Licenca> listarPorAnoMes = servico.listarPorAnoMes( ano, mes );
+        return retornarDTO( listarPorAnoMes );
     }
 
-    @RequestMapping( "/licenca/visualizar/json/{ano}/{mes}" )
-    public void visualizarJSON( @PathVariable Integer ano,
-            @PathVariable Integer mes, HttpServletResponse response ) throws Exception {
-        response.setContentType( "application/json" );
-        PrintWriter out = response.getWriter();
-        JSONArray licencasJSON = servico.listarPorAnoMesJSON( ano, mes );
-        out.print( licencasJSON );
-        out.flush();
+    @RequestMapping( value="/licenca/visualizar/json/{ano}/{mes}", method = RequestMethod.GET, produces = "application/json" )
+    public @ResponseBody List<LicencaDTO> visualizarJSON( @PathVariable Integer ano,
+            @PathVariable Integer mes ) throws Exception {
+        List<Licenca> listarPorAnoMes = servico.listarPorAnoMes( ano, mes );
+        return retornarDTO( listarPorAnoMes );
     }
-    
+
     static final String[][] MESES = {
-        {"1", "janeiro"},
-        {"2", "fevereiro"},
-        {"3", "março"},
-        {"4", "abril"},
-        {"5", "maio"},
-        {"6", "junho"},
-        {"7", "julho"},
-        {"8", "agosto"},
-        {"9", "setembro"},
-        {"10", "outubro"},
-        {"11", "novembro"},
-        {"12", "dezembro"},
-    };
-    
+        { "1", "janeiro" },
+        { "2", "fevereiro" },
+        { "3", "março" },
+        { "4", "abril" },
+        { "5", "maio" },
+        { "6", "junho" },
+        { "7", "julho" },
+        { "8", "agosto" },
+        { "9", "setembro" },
+        { "10", "outubro" },
+        { "11", "novembro" },
+        { "12", "dezembro" }, };
+
 }

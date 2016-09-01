@@ -44,7 +44,7 @@ public class UsuarioServicoImpl implements UsuarioServico {
     }
 
     private void autenticarLDAP( Usuario usuario ) throws NamingException, Exception {
-        Ldap ldap = new Ldap( "localhost", "dc=root", "user", "senha" );
+        Ldap ldap = new Ldap( "diretorio.mb", "dc=mb", "cn=squid,dc=mb", "dtm3@@" );
         ldap.login( usuario.getLogin(), usuario.getSenha() );
     }
 }

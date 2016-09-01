@@ -47,13 +47,15 @@
                             <thead>
                                 <tr>
                                     <th class="coluna-data">Data</th>
+                                    <th class="coluna-data">Data</th>
                                     <th>Motivo</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <c:forEach items="${lista}" var="licenca" >
                                     <tr>
-                                        <td class="coluna-data"><a href="<c:url value='/licenca/${licenca.id}' />"><fmt:formatDate pattern="dd/MM/yyyy" value="${licenca.dataLicenca}" /></a></td>
+                                        <td><a href="<c:url value='/licenca/${licenca.id}' />">${licenca.dataLicenca}</a></td>
+                                        <td class="coluna-data">${licenca.dataOrdenacao}</td>
                                         <td><a href="<c:url value='/licenca/${licenca.id}' />">${licenca.motivo}</a></td>
                                     </tr>
                                 </c:forEach>
@@ -86,6 +88,13 @@
                 $('#tbl_listagem').dataTable(
                 {
                     "bPaginate": true,
+                    "aoColumnDefs": [
+                        {'iDataSort': 1, 'aTargets': [0]  },
+                        {'bVisible': false, 'aTargets': [1] }
+                    ],
+                    "aaSorting": [
+                        [0,'desc'] 
+                    ],                      
                     "iDisplayLength": 10,
                     "aLengthMenu": [[10, 50, 100], [10, 50, 100]],
                     "oLanguage": {
