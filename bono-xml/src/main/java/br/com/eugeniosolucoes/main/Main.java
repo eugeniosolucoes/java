@@ -36,22 +36,8 @@ public class Main {
 
     public static void main( String[] args ) {
         try {
-            TypedQuery<Bono> query = em.createNamedQuery( "Bono.findAll", Bono.class );
-
-            List<Bono> lista = query.setMaxResults( 2 ).getResultList();
-            Whitelist whitelist = new Whitelist();
-
-            whitelist.addTags( "<br>" );
-
-            for ( Bono bono : lista ) {
-                bono.setConteudo( Jsoup.clean( bono.getConteudo(), whitelist ) );
-                try {
-                    String xml = XmlUtils.createXmlFromObject( bono );
-                    Files.write( Paths.get( path( bono ) ), xml.getBytes(), StandardOpenOption.CREATE );
-                } catch ( IOException ex ) {
-                    LOG.error( ex.getMessage(), ex );
-                }
-            }
+            Long total = em.createQuery( "SELECT COUNT(b) FROM Bono b ", Long.class ).getSingleResult();
+            createFiles( total.intValue() );
         } catch ( Exception e ) {
             LOG.error( e.getMessage(), e );
         } finally {
@@ -60,11 +46,39 @@ public class Main {
         }
     }
 
+    private static void createFiles( final int size ) {
+        final int maxResults = 100;
+        for ( int i = 0; i < size; i += maxResults ) {
+            TypedQuery<Bono> query = em.createNamedQuery( "Bono.findAll", Bono.class );
+
+            List<Bono> lista = query.setFirstResult( i )
+                    .setMaxResults( maxResults )
+                    .getResultList();
+
+            Whitelist whitelist = new Whitelist();
+
+            whitelist.addTags( "<br>" );
+
+            for ( Bono bono : lista ) {
+                bono.setConteudo( Jsoup.clean( bono.getConteudo(), whitelist ) );
+                try {
+                    String xml = XmlUtils.createXmlFromObject( bono );
+                    String path = path( bono );
+                    Files.write( Paths.get( path ), xml.getBytes(), StandardOpenOption.CREATE );
+                    System.out.println( path );
+                } catch ( IOException ex ) {
+                    LOG.error( ex.getMessage(), ex );
+                }
+            }
+        }
+    }
+
     private static String path( Bono bono ) {
+
         int numero = bono.getNumero();
         int ano = bono.getAno();
         BigDecimal id = bono.getId();
-        return String.format( "%d-%03d-%05d.xml", ano, numero, id.intValue() );
+        return String.format( "./bonos/%d-%03d-%05d.xml", ano, numero, id.intValue() );
     }
 
 }
