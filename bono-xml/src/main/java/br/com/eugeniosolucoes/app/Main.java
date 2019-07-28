@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package br.com.eugeniosolucoes.main;
+package br.com.eugeniosolucoes.app;
 
 import java.util.List;
 import javax.persistence.EntityManager;
@@ -12,6 +12,7 @@ import javax.persistence.Persistence;
 import javax.persistence.TypedQuery;
 import br.com.eugeniosolucoes.bono.Bono;
 import br.com.eugeniosolucoes.util.XmlUtils;
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
@@ -30,12 +31,15 @@ public class Main {
 
     private static final org.apache.log4j.Logger LOG = org.apache.log4j.Logger.getLogger( Main.class.getName() );
 
+    private static final String PATH_BONOS = "./bonos";
+    
     static EntityManagerFactory emf = Persistence.createEntityManagerFactory( "BONO_PU" );
 
     static EntityManager em = emf.createEntityManager();
 
     public static void main( String[] args ) {
         try {
+            new File( PATH_BONOS ).mkdirs();
             Long total = em.createQuery( "SELECT COUNT(b) FROM Bono b ", Long.class ).getSingleResult();
             createFiles( total.intValue() );
         } catch ( Exception e ) {
@@ -74,11 +78,10 @@ public class Main {
     }
 
     private static String path( Bono bono ) {
-
         int numero = bono.getNumero();
         int ano = bono.getAno();
         BigDecimal id = bono.getId();
-        return String.format( "./bonos/%d-%03d-%05d.xml", ano, numero, id.intValue() );
+        return String.format( PATH_BONOS + "/%d-%03d-%05d.xml", ano, numero, id.intValue() );
     }
 
 }
