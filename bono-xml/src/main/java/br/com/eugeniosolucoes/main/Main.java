@@ -28,32 +28,36 @@ import org.jsoup.safety.Whitelist;
  */
 public class Main {
 
+    private static final org.apache.log4j.Logger LOG = org.apache.log4j.Logger.getLogger( Main.class.getName() );
+
+    static EntityManagerFactory emf = Persistence.createEntityManagerFactory( "BONO_PU" );
+
+    static EntityManager em = emf.createEntityManager();
+
     public static void main( String[] args ) {
+        try {
+            TypedQuery<Bono> query = em.createNamedQuery( "Bono.findAll", Bono.class );
 
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory( "BONO_PU" );
-        EntityManager em = emf.createEntityManager();
+            List<Bono> lista = query.setMaxResults( 2 ).getResultList();
+            Whitelist whitelist = new Whitelist();
 
-        TypedQuery<Bono> query = em.createNamedQuery( "Bono.findAll", Bono.class );
-        //query.setParameter( "id", new BigDecimal( 833 ) );
+            whitelist.addTags( "<br>" );
 
-        List<Bono> lista = query.setMaxResults( 2 ).getResultList();
-        Whitelist whitelist = new Whitelist();
-
-        whitelist.addTags( "<br>" );
-
-        for(Bono bono : lista ){
-            bono.setConteudo( Jsoup.clean( bono.getConteudo(), whitelist ) );
-            try {
-                String xml = XmlUtils.createXmlFromObject( bono );
-                Files.write( Paths.get( path( bono ) ), xml.getBytes(), StandardOpenOption.CREATE );
-            } catch ( IOException ex ) {
-                Logger.getLogger( Main.class.getName() ).log( Level.SEVERE, null, ex );
+            for ( Bono bono : lista ) {
+                bono.setConteudo( Jsoup.clean( bono.getConteudo(), whitelist ) );
+                try {
+                    String xml = XmlUtils.createXmlFromObject( bono );
+                    Files.write( Paths.get( path( bono ) ), xml.getBytes(), StandardOpenOption.CREATE );
+                } catch ( IOException ex ) {
+                    LOG.error( ex.getMessage(), ex );
+                }
             }
+        } catch ( Exception e ) {
+            LOG.error( e.getMessage(), e );
+        } finally {
+            em.close();
+            emf.close();
         }
-
-        em.close();
-        emf.close();
-
     }
 
     private static String path( Bono bono ) {
